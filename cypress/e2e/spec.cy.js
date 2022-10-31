@@ -1,4 +1,5 @@
 describe('empty spec', () => {
+
   it('Succesfully loads', () => {
     cy.visit('/')
   });

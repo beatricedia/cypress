@@ -1,3 +1,5 @@
+// ******* Seeding data *******
+
 // cy.exec() - to run system commands
 // cy.task() - to run code in Node via the setupNodeEvents function
 // cy.request() - to make HTTP requests
