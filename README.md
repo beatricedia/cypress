@@ -51,6 +51,21 @@ cy.get('input[name="field-name"]')
 ```
 
 ## How to Interact with DOM Elements
+
+comands:
+https://docs.cypress.io/api/commands/click
+
+.get()
+.type()
+.blur() - Make a focused DOM element blur.
+.focus() - Focus on a DOM element.
+.clear() - Clear the value of an input or textarea.
+.check() - Check checkbox(es) or radio(s).
+.uncheck() - Uncheck checkbox(es).
+.select() - Select an <option> within a <select>.
+.dblclick() - Double-click a DOM element.
+.rightclick() - Right-click a DOM element.
+
 ```
 // Click on the element
 cy.get('button').click()
@@ -154,3 +169,192 @@ cy.get('.todo').should('not.have.class', 'completed')
 cy.get('#loading').should('not.be.visible')
 ```
 
+## Network Handling
+### Network Spying - manage the behavior of any network request
+```
+it('should display a Load More button after fetching and displaying a list of users', () => {
+  cy.visit('/users')
+  cy.intercept('/users/**')
+  cy.get('button').contains('Load More')
+})
+```
+
+### Network Stubbing
+```
+it('should display a warning when the third-party API is down', () => {
+  cy.intercept(
+    'GET',
+    'https://api.openweathermap.org/data/2.5/weather?q=Atlanta',
+    { statusCode: 500 }
+  )
+  cy.get('.weather-forecast').contains('Weather Forecast Unavailable')
+})
+
+```
+
+You can also use the intercept API to stub a custom response for specific network requests:
+
+```
+it('projects endpoint should return 2 projects', () => {
+  cy.intercept('/projects', {
+    body: [{ projectId: '1' }, { projectId: '2' }],
+  }).as('projects')
+  cy.wait('@projects').its('response.body').should('have.length', 2)
+})
+```
+
+## Navigating Websites
+```
+it('visits a page', () => {
+  cy.visit('/about')
+  cy.go('forward')
+  cy.go('back')
+})
+```
+
+## Automatic Retrying and Waiting
+```
+// Clicking a button
+cy.get('button').click()
+
+// Make assertion. No waiting necessary!
+cy.get('.list-item').contains('my text')
+
+```
+
+## Using Page Objects
+```
+const page = {
+  login: () => {
+    cy.get('.username').type('my username')
+    cy.get('.password').type('my password')
+    cy.get('button').click()
+  },
+}
+
+it('should display the username of a logged in user', () => {
+  page.login()
+  cy.get('.username').contains('my username')
+})
+```
+
+Cypress also provides a Custom Command API to enable you to add methods to the cy global directly:
+
+```
+Cypress.Commands.add('login', (username, password) => {
+  cy.get('.username').type(username)
+  cy.get('.password').type(password)
+})
+```
+
+You can use your own custom commands in any of your tests:
+```
+it('should display the username of a logged in user', () => {
+  cy.login('Matt', Cypress.env('password'))
+  cy.get('.username').contains('Matt')
+})
+```
+
+# Parallelization
+
+```
+cypress run --record --parallel
+```
+
+# Angular Schematic Configuration
+### Running the builder with a specific browser
+Before running Cypress in open mode, ensure that you have started your application server using ng serve.
+```
+"cypress-open": {
+  "builder": "@cypress/schematic:cypress",
+  "options": {
+    "watch": true,
+    "headless": false,
+    "browser": "chrome"
+  },
+  "configurations": {
+    "production": {
+      "devServerTarget": "{project-name}:serve:production"
+    }
+  }
+}
+```
+### Recording test results to the Cypress Dashboard
+
+We recommend setting your Cypress Dashboard recording key as an environment variable and NOT as a builder option when running it in CI.
+
+```
+"cypress-run": {
+  "builder": "@cypress/schematic:cypress",
+  "options": {
+    "devServerTarget": "{project-name}:serve",
+    "record": true,
+    "key": "your-cypress-dashboard-recording-key"
+  },
+  "configurations": {
+    "production": {
+      "devServerTarget": "{project-name}:production"
+    }
+  }
+}
+```
+
+### Specifying a custom Cypress configuration file
+```
+"cypress-run": {
+  "builder": "@cypress/schematic:cypress",
+  "options": {
+    "devServerTarget": "{project-name}:serve",
+    "configFile": "cypress.production.config.js"
+  },
+  "configurations": {
+    "production": {
+      "devServerTarget": "{project-name}:production"
+    }
+  }
+}
+```
+
+### Running Cypress in parallel mode within CI
+```
+"cypress-run": {
+  "builder": "@cypress/schematic:cypress",
+  "options": {
+    "devServerTarget": "{project-name}:serve",
+    "parallel": true,
+    "record": true,
+    "key": "your-cypress-dashboard-recording-key"
+  },
+  "configurations": {
+    "production": {
+      "devServerTarget": "{project-name}:production"
+    }
+  }
+}
+```
+
+#Constants
+```
+// Set up some constants for the selectors
+const counterSelector = '[data-cy=counter]'
+const incrementSelector = '[aria-label=increment]'
+const decrementSelector = '[aria-label=decrement]'
+
+//for component testing
+it('when the decrement button is pressed, the counter is decremented', () => {
+  // Arrange
+  cy.mount('<app-stepper></app-stepper>', {
+    declarations: [StepperComponent],
+  })
+  // Act
+  cy.get(decrementSelector).click()
+  // Assert
+  cy.get(counterSelector).should('have.text', '-1')
+})
+```
+
+# JQuerying Elements
+```
+// Each method is equivalent to its jQuery counterpart. Use what you know!
+cy.get('#main-content').find('.article').children('img[src^="/static"]').first()
+```
